@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>RGCSM Online Exam - Notepad & WordPad</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #c3a9f5, #e6d7ff);
+    margin: 0;
+    padding: 0;
+}
+
+/* ---------- LOGIN PAGE ---------- */
+#loginPage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+}
+.login-box {
+    background: rgba(255,255,255,0.25);
+    border-radius: 15px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    padding: 30px;
+    width: 90%;
+    max-width: 380px;
+    text-align: center;
+}
+.login-box h2 {
+    margin-bottom: 20px;
+    color: #4b0082;
+}
+.login-box input {
+    width: 90%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+}
+.login-box button {
+    width: 95%;
+    padding: 12px;
+    background-color: #7a4de0;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+.login-box button:hover {
+    background-color: #5e35b1;
+}
+.error {
+    color: red;
+    margin-top: 10px;
+    min-height: 18px;
+}
+
+/* ---------- EXAM PAGE ---------- */
+#examPage {
+    display: none;
+    padding: 10px;
+    max-width: 900px;
+    margin: auto;
+}
+h1 {
+    text-align: center;
+    color: #4b0082;
+    font-size: 1.5em;
+}
+.timer {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #4b0082;
+}
+.question-box {
+    background: rgba(255,255,255,0.95);
+    padding: 15px;
+    border-radius: 15px;
+    margin-top: 15px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.2);
+}
+.question-box p { font-size: 1em; margin: 0 0 10px 0; }
+label { font-size: 0.95em; cursor: pointer; display: block; padding: 6px 0; }
+
+/* ---------- BUTTONS ---------- */
+.btn-row { text-align: center; margin-top: 12px; }
+button {
+    padding: 10px 12px;
+    margin: 8px 6px;
+    border: none;
+    background: #7a4de0;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button:hover { background: #5e35b1; }
+
+/* ---------- CIRCLES ---------- */
+.nav-container {
+    display: flex;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 8px 4px;
+    margin-top: 10px;
+    background: rgba(255,255,255,0.6);
+    border-radius: 10px;
+}
+.circle {
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    line-height: 34px;
+    border-radius: 50%;
+    background-color: #e53935; /* red */
+    color: white;
+    text-align: center;
+    margin: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.circle.attempted { background-color: #2e7d32; } /* green */
+
+/* ---------- RESULT PAGE ---------- */
+#resultPage {
+    display: none;
+    min-height: 100vh;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #4b0082;
+    padding: 20px;
+}
+#resultPage h2 { font-size: 26px; margin-bottom: 14px; }
+#resultPage p { font-size: 20px; margin: 6px 0; }
+
+/* ---------- RESPONSIVE ---------- */
+@media screen and (max-width: 600px){
+    .question-box { font-size: 0.95em; padding: 12px; }
+    button { font-size: 12px; padding: 8px 10px; margin:6px 4px; }
+    .circle { width: 28px; height: 28px; line-height: 28px; font-size: 12px; margin: 4px; }
+    .timer { font-size: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN PAGE -->
+<div id="loginPage">
+    <div class="login-box">
+        <h2>RGCSM</h2>
+        <input type="text" id="username" placeholder="username (e.g. rgcsm001)" autocomplete="off">
+        <input type="password" id="password" placeholder="password (e.g. 001)" autocomplete="off">
+        <button onclick="validateLogin()">Login</button>
+        <p id="errorMsg" class="error"></p>
+    </div>
+</div>
+
+<!-- EXAM PAGE -->
+<div id="examPage">
+    <h1>RGCSM Online Exam — Notepad & WordPad</h1>
+    <p style="text-align:center;"><strong>Student:</strong> <span id="studentName"></span></p>
+    <div class="timer" id="timer">60:00</div>
+
+    <div class="question-box" id="questionBox"></div>
+
+    <div class="nav-container" id="navCircles" aria-label="Question navigation"></div>
+
+    <div class="btn-row">
+        <button id="prevBtn" onclick="prevQuestion()">Previous</button>
+        <button id="nextBtn" onclick="nextQuestion()">Save & Next</button>
+        <button id="submitBtn" onclick="submitExam()">Submit Exam</button>
+    </div>
+</div>
+
+<!-- RESULT PAGE -->
+<div id="resultPage">
+    <h2>Your Exam Has Been Submitted</h2>
+    <p><strong>Student:</strong> <span id="resultName"></span></p>
+    <p>✅ Correct Answers: <span id="correctCount"></span></p>
+    <p>❌ Wrong Answers: <span id="wrongCount"></span></p>
+    <p>📊 Score Percentage: <span id="scorePercent"></span>%</p>
+</div>
+
+<script>
+/* --- disable refresh keys and warn on unload --- */
+let submitted = false;
+document.addEventListener("keydown", e=>{
+    if(e.key === "F5" || (e.ctrlKey && (e.key === "r" || e.key === "R"))) e.preventDefault();
+});
+window.addEventListener('beforeunload', (ev) => {
+    if(!submitted){
+        ev.preventDefault();
+        ev.returnValue = '';
+    }
+});
+
+/* ---------------- LOGIN ---------------- */
+function validateLogin(){
+    const usernameEl = document.getElementById("username");
+    const passwordEl = document.getElementById("password");
+    const username = usernameEl.value.trim().toLowerCase();
+    const password = passwordEl.value.trim();
+    const pattern = /^rgcsm(\d{3})$/;
+    const match = username.match(pattern);
+    const err = document.getElementById("errorMsg");
+    if(match && match[1] === password){
+        err.textContent = "";
+        document.getElementById("loginPage").style.display = "none";
+        document.getElementById("examPage").style.display = "block";
+        document.getElementById("studentName").innerText = username;
+        renderCircles();
+        loadQuestion();
+        startTimer();
+    } else {
+        err.textContent = "Invalid Login!";
+    }
+}
+
+/* ---------------- QUESTIONS (99 Notepad & WordPad MCQs) ---------------- */
+const questions = [
+{ q: "1. Notepad is primarily used for:", options: ["Creating formatted documents","Plain text editing","Spreadsheet calculations","Database management"] },
+{ q: "2. Which file extension is commonly used by Notepad when saving plain text?", options: [".docx",".txt",".rtf",".wpd"] },
+{ q: "3. WordPad supports which type of text formatting that Notepad does not?", options: ["Bold/Italic/Underline","Only plain text","Database tables","Program compilation"] },
+{ q: "4. Which application allows insertion of images: Notepad or WordPad?", options: ["Notepad","WordPad","Neither","Both"] },
+{ q: "5. Which feature is available in WordPad?", options: ["Headers/Footers","Basic rich text formatting (RTF)","Macro scripting","Database connections"] },
+{ q: "6. Notepad's default font is typically:", options: ["Times New Roman","Courier New (monospace)","Comic Sans","Calibri"] },
+{ q: "7. Which format can WordPad natively save to (without third-party tools)?", options: [".xlsx",".rtf",".pdf",".ps"] },
+{ q: "8. Which menu in WordPad contains the 'Paste' command?", options: ["File menu","Home / Ribbon","View menu","Help menu"] },
+{ q: "9. Notepad is best suited for:", options: ["Complex publishing","Plain configuration files and notes","Desktop publishing","Image editing"] },
+{ q: "10. Which application offers font size and font family selection in its interface?", options: ["Notepad only","WordPad only","Both Notepad and WordPad","Neither"] },
+
+{ q: "11. Which program displays line numbers using 'Go To' feature (go to specific line)?", options: ["WordPad","Notepad (Go To)","Both","Neither"] },
+{ q: "12. WordPad uses which underlying document format for rich text?", options: ["RTF (Rich Text Format)","TXT (Plain text)","XLS (Spreadsheet)","PPT (Presentation)"] },
+{ q: "13. Notepad is included by default with which OS?", options: ["Most versions of Windows","MacOS","Linux only","None"] },
+{ q: "14. WordPad can open files created in which formats? (commonly)", options: [".rtf and .docx","..xls only",".pptx only",".mdb only"] },
+{ q: "15. Which app is lightweight and minimal with almost no formatting options?", options: ["WordPad","Notepad","Microsoft Word","Publisher"] },
+{ q: "16. Which of these is a use-case for Notepad?", options: ["Writing a book with chapters","Quick editing of configuration files","Advanced desktop publishing","Video editing"] },
+{ q: "17. WordPad's toolbar is often called:", options: ["Ribbon","Inspector","Console","Dock"] },
+{ q: "18. In Notepad, to insert current date & time you can press:", options: ["F5","F2","F1","F12"] },
+{ q: "19. WordPad is best for:", options: ["Plain text scripting only","Basic formatted documents with images","Spreadsheet calculations","Developing software"] },
+{ q: "20. Which app preserves text formatting when saving fonts, bold and colors?", options: ["Notepad","WordPad","Both","None"] },
+
+{ q: "21. Which app allows you to save as Rich Text Format (.rtf)?", options: ["Notepad only","WordPad only","Both","Neither"] },
+{ q: "22. In Notepad, how many character encoding options commonly appear when saving a file?", options: ["None","One","Several (ANSI, UTF-8, etc.)","Only UTF-16"] },
+{ q: "23. Which app is typically used to edit batch (.bat) or script (.sh) files quickly?", options: ["WordPad","Notepad","PowerPoint","Excel"] },
+{ q: "24. Which feature exists in WordPad but not in Notepad?", options: ["Insert picture","Plain text editing","Open files","Save files"] },
+{ q: "25. If you need a monospace view for programming, which is better out-of-box?", options: ["WordPad","Notepad","Both equally","Neither"] },
+{ q: "26. Notepad's 'Word Wrap' option does what?", options: ["Adds bold text","Wraps long lines visually","Converts to RTF","Deletes extra spaces"] },
+{ q: "27. WordPad files with complex formatting are best saved as:", options: [".txt",".rtf",".exe",".dll"] },
+{ q: "28. Both Notepad and WordPad can be used to:", options: ["Edit registry settings","Write and save plain text","Create databases","Compile code"] },
+{ q: "29. Which app is useful for taking quick notes with no formatting overhead?", options: ["WordPad","Notepad","PowerPoint","Outlook"] },
+{ q: "30. WordPad was introduced to replace which older simple editor in Windows?", options: ["Notepad","Write","Word","Paint"] },
+
+{ q: "31. Which of these actions is possible in WordPad?", options: ["Insert hyperlinks to web pages","Insert pictures from files","Run macros","Create forms"] },
+{ q: "32. Which app automatically shows a status bar with line and column numbers (when enabled)?", options: ["WordPad","Notepad (status bar shows line/col when Word Wrap off)","Both","Neither"] },
+{ q: "33. Which application supports Unicode characters by default (UTF-8/UTF-16)?", options: ["Notepad","WordPad","Both","Neither"] },
+{ q: "34. Which app can save in .odt (OpenDocument Text) natively?", options: ["WordPad","Notepad","Both","Neither"] },
+{ q: "35. WordPad's paste options typically include:", options: ["Paste only plain text","Paste with formatting and paste as picture","Paste as spreadsheet","Paste as executable"] },
+{ q: "36. Using Notepad to view HTML source code is common because:", options: ["It renders HTML visually","It strips HTML tags","It shows raw HTML source","It converts it to PDF"] },
+{ q: "37. Which program supports simple paragraph alignment (left/center/right)?", options: ["Notepad","WordPad","Neither","Both"] },
+{ q: "38. WordPad is more suitable than Notepad when:", options: ["You need code indentation","You need formatted headings and images","You only need plain text","You want console access"] },
+{ q: "39. Notepad is preferred for editing which of the following files?", options: ["PSD image files",".ini configuration files",".docx formatted letters",".xlsx spreadsheets"] },
+{ q: "40. WordPad offers which of these text styles?", options: ["Stylesheets and CSS","Bold, italic and underline","Database relationships","3D models"] },
+
+{ q: "41. Which program allows easy insertion of clipboard images into the document?", options: ["Notepad","WordPad","Both","Neither"] },
+{ q: "42. The 'Save As' dialog in Notepad typically allows choosing encoding such as:", options: ["JPEG/BMP","ANSI, UTF-8, UTF-16","MP3/WAV","EXE/DLL"] },
+{ q: "43. WordPad files with pictures and formatting are usually larger because of:", options: ["Compression","Embedded formatting and images","Smaller font size","Fewer characters"] },
+{ q: "44. Notepad's interface is best described as:", options: ["Feature-rich","Minimal and plain","3D and animated","Database-driven"] },
+{ q: "45. Which app provides a ruler for layout control (approximate)?", options: ["Notepad","WordPad","Both","Neither"] },
+{ q: "46. Notepad is usually chosen to:", options: ["Design brochures","Quickly edit plain text files","Make slide presentations","Edit videos"] },
+{ q: "47. Which app can insert objects like pictures and change text color easily?", options: ["Notepad","WordPad","Notepad++ only","Command Prompt"] },
+{ q: "48. When you paste rich formatted text into WordPad, what happens?", options: ["Formatting is lost","Formatting is retained","It becomes an image","It crashes"] },
+{ q: "49. Which application allows different fonts in the same document?", options: ["Notepad","WordPad","Both","Neither"] },
+{ q: "50. For preserving plain text without formatting, which is safer?", options: ["WordPad","Notepad","Word with track changes","Excel"] },
+
+{ q: "51. WordPad can open files created by which early Windows word processor (commonly)?", options: ["Write (.wri)","Excel (.xls)","PowerPoint (.ppt)","Notepad (.txt)"] },
+{ q: "52. Notepad's 'Find' feature is typically used to:", options: ["Search and replace complex styles","Locate text strings within the file","Open images","Compile code"] },
+{ q: "53. Can WordPad create bulleted or numbered lists?", options: ["Yes","No","Only with add-on","Only imported from Word"] },
+{ q: "54. Notepad prints exactly what you see on screen; to manage page setup you use:", options: ["Page Layout in WordPad","Page Setup in Notepad's File menu","Print Manager only","Registry Editor"] },
+{ q: "55. WordPad documents saved as .rtf can be opened by:", options: ["Only WordPad","Many word processors","Only Notepad","Only image editors"] },
+{ q: "56. Notepad stores only plain text; this means:", options: ["No fonts or styles are stored","All formatting is embedded","It stores images","It stores macros"] },
+{ q: "57. Which is TRUE about WordPad?", options: ["It is more advanced than Word","It provides more formatting than Notepad","It is a spreadsheet","It can run programs"] },
+{ q: "58. Notepad is good for creating which of these?", options: ["Formatted newsletters","Simple log files and notes","Complex legal documents","Interactive forms"] },
+{ q: "59. WordPad's ribbon contains toolgroups such as:", options: ["Home and View groups (font, paragraph)","Developer and Admin","Database Tools","Media Composer"] },
+{ q: "60. Notepad offers which of these editing conveniences?", options: ["Track changes","Word Wrap and Find/Replace","Styles and themes","Table insertion"] },
+
+{ q: "61. Which program is typically used to prepare a quick README.txt file?", options: ["WordPad","Notepad","Excel","MS Access"] },
+{ q: "62. WordPad's default save extension is often:", options: [".txt",".rtf",".pdf",".docx"] },
+{ q: "63. Which application is often used to view log files because it doesn't add formatting?", options: ["WordPad","Notepad","MS Word","PowerPoint"] },
+{ q: "64. When you copy/paste from a web page into WordPad, by default:", options: ["Text and basic formatting preserved","Only plain text pasted","Only images pasted","It converts to PDF"] },
+{ q: "65. Which app shows a minimal toolbar with only basic commands?", options: ["WordPad","Notepad","Excel","Visual Studio"] },
+{ q: "66. Notepad is useful for creating which of these web-related files?", options: [".jpg",".html",".pptx",".mdb"] },
+{ q: "67. Which app provides more control over paragraph spacing?", options: ["Notepad","WordPad","Paint","Calculator"] },
+{ q: "68. WordPad's search/replace capability is:", options: ["Not present","Basic (find & replace)","Advanced regex-only","Only available via plugin"] },
+{ q: "69. Which app stores plain text so file size remains small?", options: ["WordPad","Notepad","Word","Publisher"] },
+{ q: "70. The Notepad 'Replace' dialog allows you to:", options: ["Design templates","Find and replace text","Create macros","Edit images"] },
+
+{ q: "71. WordPad supports which alignment options?", options: ["Left/Center/Right/Justify","Only Left","Only Center","Only Right"] },
+{ q: "72. Which file when saved from WordPad is most portable and preserves formatting across many editors?", options: [".txt",".rtf",".exe",".dll"] },
+{ q: "73. When Notepad opens a file with unusual characters, you might change:", options: ["Font color","Encoding (ANSI/UTF-8/etc.)","Window size","Taskbar settings"] },
+{ q: "74. Which of these is NOT a typical WordPad capability?", options: ["Insert pictures","Create complex mail merges","Set font styles","Align paragraphs"] },
+{ q: "75. Notepad window has a simple menu; which of these is part of it?", options: ["Home (ribbon)","File, Edit, Format, View, Help","Developer","Design"] },
+{ q: "76. WordPad is best when you need to:", options: ["Edit raw binary files","Create a document with images and basic formatting","Program in C++","Design a database schema"] },
+{ q: "77. Which application is native to Windows and free to use without extra installation?", options: ["WordPad and Notepad","Microsoft Word only","Third-party editors only","Neither"] },
+{ q: "78. Notepad will treat multiple spaces and tabs as:", options: ["Hidden formatting","Plain characters shown exactly","Converted to bullets","Converted to images"] },
+{ q: "79. WordPad allows changing text color by:", options: ["Right-click only","Using the font color control in the ribbon","Editing registry","Using command prompt"] },
+{ q: "80. If you need to create a simple flyer with image and text, which to choose?", options: ["Notepad","WordPad","Notepad++","Command Prompt"] },
+
+{ q: "81. WordPad saves images inserted in the document as:", options: ["External links only","Embedded image data inside file",".txt attachments",".dll modules"] },
+{ q: "82. Which app would you use to quickly strip formatting from clipboard text (paste as plain text)?", options: ["WordPad","Notepad","PowerPoint","Windows Media Player"] },
+{ q: "83. Notepad's 'Format' menu commonly contains:", options: ["Font, Word Wrap","Insert Picture, Table","Developer Tools","Mail Merge"] },
+{ q: "84. WordPad's 'File' menu includes:", options: ["Save, Save As, Print, Open","Only Save","Only Print","Only Exit"] },
+{ q: "85. Notepad is commonly used by programmers to:", options: ["Run their code","Edit configuration or source files quickly","Design GUIs","Create installers"] },
+{ q: "86. Which app is more appropriate for drafting a simple poster with an image and formatted text?", options: ["Notepad","WordPad","Notepad++","Task Manager"] },
+{ q: "87. The 'Status Bar' in Notepad (when enabled) can show:", options: ["CPU usage","Line and column numbers (when Word Wrap off)","Pictures","Text shadows"] },
+{ q: "88. WordPad supports which insertion from the ribbon?", options: ["Insert Picture","Insert Virtual Machine","Insert Spreadsheet Engine","Insert Kernel"] },
+{ q: "89. Notepad files are often used for:", options: ["Email marketing","Configuration files like .ini and .env","High-resolution printing","Video editing"] },
+{ q: "90. WordPad can open files created by which Microsoft product format (commonly)?", options: [".xlsx",".rtf",".accdb",".pst"] },
+
+{ q: "91. Which app will show rich text formatting like multiple fonts and colors inside the same document?", options: ["Notepad","WordPad","Calculator","Paint"] },
+{ q: "92. Notepad is often used to view which of the following file contents safely (without executing anything)?", options: [".exe binary code",".ini and .log plain text",".database files",".compressed images"] },
+{ q: "93. WordPad's default text flow is:", options: ["Non-flowing fixed blocks","Flowing paragraphs where text wraps","Only table cells","Only single-line entries"] },
+{ q: "94. Which program can quickly convert clipboard HTML to viewable text including basic formatting?", options: ["Notepad","WordPad","Calculator","Command Prompt"] },
+{ q: "95. WordPad's Print functionality will usually print:", options: ["Only plain text","The document with formatting and images","Nothing","Only headers"] },
+{ q: "96. Notepad is smallest in size among typical text editors because it:", options: ["Uses many plugins","Has minimal features and stores plain text only","Includes full office suite","Has integrated image editor"] },
+{ q: "97. WordPad documents are often recommended when:", options: ["You need advanced book publishing features","You need simple formatted documents without buying Word","You need database engines","You need video editing tools"] },
+{ q: "98. To ensure portability of basic text without formatting, you should save as:", options: [".rtf",".txt",".docx",".wps"] },
+{ q: "99. Which tool is best to remove all formatting from copied text quickly?", options: ["WordPad's Save As","Paste into Notepad, then copy again","Save as PDF from WordPad","Use Task Manager"] }
+];
+/* ---------------- CORRECT ANSWERS (0-based indices) ----------------
+Each number is the index of the correct option (0..3).
+*/
+const correctAnswers = [
+1,1,0,1,1,1,1,1,1,1,   // 1-10
+1,0,0,0,1,1,0,0,1,1,   // 11-20
+1,1,1,1,1,1,1,1,1,0,   // 21-30
+1,1,2,1,1,2,1,1,1,1,   // 31-40
+1,1,1,1,1,1,1,1,1,1,   // 41-50
+0,1,0,1,1,1,1,1,1,1,   // 51-60
+1,1,1,1,1,1,1,1,1,1,   // 61-70
+1,1,1,1,1,1,1,1,1,1,   // 71-80
+1,1,1,1,1,1,1,1,1,1,   // 81-90
+1,1,1,1,1,1,1,1,1      // 91-99
+];
+// sanity check
+if(correctAnswers.length !== questions.length){
+    console.warn("correctAnswers length mismatch:", correctAnswers.length, questions.length);
+}
+/* ---------------- EXAM LOGIC ---------------- */
+let currentQuestion = 0;
+const userAnswers = new Array(questions.length).fill(null);
+let timerInterval = null;
+function renderCircles(){
+    const nav = document.getElementById("navCircles");
+    nav.innerHTML = "";
+    questions.forEach((_, i) => {
+        const circle = document.createElement("div");
+        circle.className = "circle";
+        circle.textContent = i + 1;
+        circle.title = "Go to question " + (i+1);
+        circle.onclick = () => goToQuestion(i);
+        nav.appendChild(circle);
+    });
+    updateCircles();
+}
+function updateCircles(){
+    const circles = document.querySelectorAll(".circle");
+    circles.forEach((c, i) => {
+        if(userAnswers[i] !== null) c.classList.add("attempted");
+        else c.classList.remove("attempted");
+    });
+}
+function loadQuestion(){
+    const qBox = document.getElementById("questionBox");
+    const q = questions[currentQuestion];
+    qBox.innerHTML = `
+        <p><strong>${q.q}</strong></p>
+        ${q.options.map((opt, i) => `
+            <label>
+              <input type="radio" name="option" value="${i}" ${userAnswers[currentQuestion]===i ? "checked":""}>
+              ${opt}
+            </label>
+        `).join('')}
+        <p style="margin-top:8px;color:#555;font-size:0.9em;">Question ${currentQuestion+1} of ${questions.length}</p>
+    `;
+    document.getElementById("prevBtn").disabled = currentQuestion === 0;
+    document.getElementById("nextBtn").disabled = currentQuestion === questions.length - 1;
+    document.getElementById("nextBtn").textContent = currentQuestion === questions.length - 1 ? "Save & Finish" : "Save & Next";
+    updateCircles();
+}
+function saveCurrentAnswer(){
+    const selected = document.querySelector('input[name="option"]:checked');
+    if(selected) userAnswers[currentQuestion] = parseInt(selected.value);
+    updateCircles();
+}
+function nextQuestion(){
+    if(submitted) return;
+    saveCurrentAnswer();
+    if(currentQuestion < questions.length - 1){
+        currentQuestion++;
+        loadQuestion();
+    }
+}
+function prevQuestion(){
+    if(submitted) return;
+    saveCurrentAnswer();
+    if(currentQuestion > 0){
+        currentQuestion--;
+        loadQuestion();
+    }
+}
+function goToQuestion(i){
+    if(submitted) return;
+    saveCurrentAnswer();
+    currentQuestion = i;
+    loadQuestion();
+}
+function submitExam(){
+    if(submitted) return;
+    submitted = true;
+    saveCurrentAnswer();
+    clearInterval(timerInterval);
+    // scoring
+    let correctCount = 0;
+    for(let i=0;i<questions.length;i++){
+        const ans = userAnswers[i];
+        if(ans !== null && typeof correctAnswers[i] !== "undefined" && ans === correctAnswers[i]){
+            correctCount++;
+        }
+    }
+    const wrongCount = questions.length - correctCount;
+    const scorePercent = Math.round((correctCount / questions.length) * 100);
+    // show results
+    document.getElementById("examPage").style.display = "none";
+    document.getElementById("resultPage").style.display = "flex";
+    document.getElementById("resultName").textContent = document.getElementById("studentName").textContent;
+    document.getElementById("correctCount").textContent = correctCount;
+    document.getElementById("wrongCount").textContent = wrongCount;
+    document.getElementById("scorePercent").textContent = scorePercent;
+}
+/* ---------------- TIMER ---------------- */
+function startTimer(){
+    let timeLeft = 60 * 60; // seconds
+    const timerEl = document.getElementById("timer");
+    timerEl.textContent = "60:00";
+    timerInterval = setInterval(() => {
+        if(submitted){ clearInterval(timerInterval); return; }
+        const min = Math.floor(timeLeft / 60);
+        const sec = timeLeft % 60;
+        timerEl.textContent = String(min).padStart(2,'0') + ":" + String(sec).padStart(2,'0');
+        if(timeLeft <= 0){
+            clearInterval(timerInterval);
+            submitExam();
+        }
+        timeLeft--;
+    }, 1000);
+}
+</script>
+</body>
+</html>
